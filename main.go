@@ -1,5 +1,10 @@
 package main
 
+//go run main.go add -block "YOUR BLOCK DATA HERE"
+
+//go run main.go print
+
+
 import (
     "flag"
     "fmt"
@@ -12,7 +17,7 @@ import (
 )
 
 type CommandLine struct {
-    blockchain *blockchain.BlockChain
+    blockchain *blockchain.BlockChain //file package.struct
 }
 
 func (cli *CommandLine) printusage() {
@@ -29,17 +34,22 @@ func (cli *CommandLine) validateArgs() {
     }
 }
 
+func (cli*CommandLine) addBlock(data string) {
+    cli.blockchain.AddBlock(data)
+    fmt.Println("Added Block!")
+}
+
 func (cli *CommandLine) printChain() {
     iterator := cli.blockchain.Iterator()
 
     for {
         block := iterator.Next()
-        fmt.printf("Previous hash: %x\n", block.PrevHash)
-        fmt.printf("data: %s\n", block.Data)
-        fmt.printf("hash: %x\n", block.Hash)
+        fmt.Printf("Previous hash: %x\n", block.PrevHash)
+        fmt.Printf("data: %s\n", block.Data)
+        fmt.Printf("hash: %x\n", block.Hash)
         pow := blockchain.NewProofOfWork(block)
-        fmt.printf("Pow: %s\n", strconv.FormatBool(pow.Validate()))
-        fmt.println()
+        fmt.Printf("Pow: %s\n", strconv.FormatBool(pow.Validate()))
+        fmt.Println()
 
         if len(block.PrevHash) == 0 {
             break
