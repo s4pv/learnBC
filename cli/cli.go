@@ -12,15 +12,11 @@ import (
     "github.com/s4pv/learnBC/blockchain/wallet"
 )
 
-func (cli *CommandLine) Run(){
-}
-
-
 type CommandLine struct {
-//    blockchain *blockchain.BlockChain //file package.struct
+
 }
 
-func (cli *CommandLine) printusage() {
+func (cli *CommandLine) printUsage() {
 	fmt.Println("Usage: ")
 	fmt.Println("getbalance -address ADDRESS - get balance for ADDRESS")
 	fmt.Println("createblockchain -address ADDRESS creates a blockchain and rewards the mining fee")
@@ -33,16 +29,12 @@ func (cli *CommandLine) printusage() {
 
 func (cli *CommandLine) validateArgs() {
     if len(os.Args) < 2 {
-        cli.printusage()
+        cli.printUsage()
         runtime.Goexit()
 
     }
 }
 
-//func (cli*CommandLine) addBlock(data string) {
-//    cli.blockchain.AddBlock(data)
-//    fmt.Println("Added Block!")
-//}
 
 func(cli *CommandLine) listAddresses() {
     wallets, _ := wallet.CreateWallets()
@@ -63,21 +55,23 @@ func(cli *CommandLine) createWallet() {
 
 }
 
-func (cli \*CommandLine) printChain() {
-    iterator := cli.blockchain.Iterator()
+func (cli *CommandLine) printChain() {
+	chain := blockchain.ContinueBlockChain("")
+	defer chain.Database.Close()
+	iterator := chain.Iterator()
 
-    for {
-        block := iterator.Next()
-        fmt.Printf("Previous hash: %x\n", block.PrevHash)
-        fmt.Printf("hash: %x\n", block.Hash)
-        pow := blockchain.NewProofOfWork(block)
-        fmt.Printf("Pow: %s\n", strconv.FormatBool(pow.Validate()))
-        fmt.Println()
+	for {
+		block := iterator.Next()
+		fmt.Printf("Previous hash: %x\n", block.PrevHash)
+		fmt.Printf("hash: %x\n", block.Hash)
+		pow := blockchain.NewProofOfWork(block)
+		fmt.Printf("Pow: %s\n", strconv.FormatBool(pow.Validate()))
+		fmt.Println()
 
-        if len(block.PrevHash) == 0 {
-            break
-        }
-    }
+		if len(block.PrevHash) == 0 {
+			break
+		}
+	}
 }
 
 func (cli *CommandLine) createBlockChain(address string) {
@@ -118,8 +112,8 @@ func (cli *CommandLine) Run() {
     createBlockchainCmd := flag.NewFlagSet("createblockchain", flag.ExitOnError)
     sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
     printChainCmd := flag.NewFlagSet("printchain", flag.ExitOnError)
-    createWalletCmd := flag.NewFlagSet("createwallet", flag.ExitOnError) // this Cmd is new
-    listAddressesCmd := flag.NewFlagSet("listaddresses", flag.ExitOnError) // this Cmd is new
+    createWalletCmd := flag.NewFlagSet("createwallet", flag.ExitOnError)
+    listAddressesCmd := flag.NewFlagSet("listaddresses", flag.ExitOnError)
 
     getBalanceAddress := getBalanceCmd.String("address", "", "The address to get balance for")
     createBlockchainAddress := createBlockchainCmd.String("address", "", "The address to send genesis block reward to")
@@ -148,12 +142,12 @@ func (cli *CommandLine) Run() {
         if err != nil {
             log.Panic(err)
         }
-    case "listaddresses": // this case statement is new
+    case "listaddresses":
         err := listAddressesCmd.Parse(os.Args[2:])
         if err != nil {
             log.Panic(err)
         }
-    case "createwallet": // this case statement is new
+    case "createwallet":
         err := createWalletCmd.Parse(os.Args[2:])
         if err != nil {
             log.Panic(err)
@@ -191,10 +185,10 @@ func (cli *CommandLine) Run() {
 
         cli.send(*sendFrom, *sendTo, *sendAmount)
     }
-    if listAddressesCmd.Parsed() { // this if statement is new
+    if listAddressesCmd.Parsed() {
         cli.listAddresses()
     }
-    if createWalletCmd.Parsed(){ // this if statement is new
+    if createWalletCmd.Parsed(){
         cli.createWallet()
     }
 }
