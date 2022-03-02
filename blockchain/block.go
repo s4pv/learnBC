@@ -2,9 +2,17 @@ package blockchain
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/gob"
 	"log"
 )
+
+type Block struct {
+	Hash         []byte
+	Transactions []*Transaction
+	PrevHash     []byte
+	Nonce        int
+}
 
 func Handle(err error) {
     if err != nil {
@@ -59,21 +67,9 @@ func CreateBlock(txs []*Transaction, prevHash []byte) *Block {
 
 }
 
-//func (chain *BlockChain) addBlock(data string) {
-//    prevBlock := chain.Blocks[len(chain.Blocks)-1]
-//    new := CreateBlock(data, prevBlock.Hash)
-//    chain.Blocks = append(chain.Blocks, new)
-
-//}
-
 func Genesis(coinbase *Transaction) *Block {
     return CreateBlock([]*Transaction{coinbase}, []byte{})
 }
-
-//func InitBlockChain() *BlockChain {
-//    return &BlockChain{[]*Block{Genesis()}}
-
-//}
 
 func (b *Block) HashTransactions() []byte {
     var txHashes [][]byte

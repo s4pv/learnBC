@@ -1,7 +1,10 @@
 package blockchain
 
 import (
-    "fmt"
+	"encoding/hex"
+	"fmt"
+	"os"
+	"runtime"
 
     "github.com/dgraph-io/badger"
 
@@ -11,6 +14,7 @@ const (
     dbPath = "./tmp/blocks"
     dbFile = "./tmp/blocks/MANIFEST"
     genesisData = "First Transaction from Genesis"
+)
 
 type BlockChain struct {
     lastHash []byte
@@ -19,7 +23,7 @@ type BlockChain struct {
 }
 
 func DBexists(db) bool {
-    if _, err := os.Stats(db); os.IsNotExists(err)
+    if _, err := os.Stats(db); os.IsNotExists(err) {
         return false
     }
     return true
@@ -44,7 +48,7 @@ func InitBlockChain(address string) *BlockChain {
         fmt.Println("Genesis Created")
         err = txn.Set(genesis.Hash, genesis.Serialize())
         Handle(err)
-        err = txn.Set([]byte("lh", genesis.Hash)
+        err = txn.Set([]byte("lh"), genesis.Hash)
 
         lastHash = genesis.Hash
 
@@ -52,30 +56,7 @@ func InitBlockChain(address string) *BlockChain {
 
     })
 
-//        if _, err := txn.Get([]byte("lh")); err == badger.ErrKeyNotFound {
-//            fmt.Println("No existing blockchain found")
-//            genesis := Genesis()
-//            fmt.Println("Genesis proved")
-//            err = txn.Set(genesis.Hash, genesis.Serialize())
-//            Handle(err)
-//            err = txn.Set([]byte("lh"), genesis.Hash)
-
-//            lastHash = genesis.Hash
-
-//            return err
-//        } else {
-//            item, err := txn.Get([]byte("lh"))
-//            Handle(err)
-//            err = item.Value(func(val []byte) error {
-//                lastHash = val
-//                return nil
-//            })
-//            Handle(err)
-//            return err
-//        }
-//    })
-//    Handle(err)
-
+    Handle(err)
     blockchain := BlockChain{lastHash, db}
     return &blockchain
 }
@@ -92,7 +73,7 @@ func ContinueBlockChain(address string) *BlockChain {
     db, err := badger.Open(opts)
     Handle(err)
 
-    err = db.Update(fund(txn *badger.Txn) error {
+    err = db.Update(func(txn *badger.Txn) error {
         item, err := txn.Get([]byte("lh"))
         Handle(err)
         err = item.Value(func (val []byte) error{
@@ -108,7 +89,7 @@ func ContinueBlockChain(address string) *BlockChain {
     return &chain
 }
 
-func (chain *BlockChain) FindUnspentTransactions(address string) []Transcription {
+func (chain *BlockChain) FindUnspentTransactions(address string) []Transaction {
     var unspentTxs []Transaction
     spentTXNs := make(map[string][]int)
 
@@ -153,7 +134,7 @@ func (chain *BlockChain) FindUTXO(address string) []TxOutput {
     for _, tx := range unspentTransactions {
         for _, out := range tx.Outputs {
             if CanBeUnlocked(address) {
-                UTXOs = append(UTXOs, out
+                UTXOs = append(UTXOs, out)
             }
         }
     }
@@ -181,34 +162,34 @@ Work:
     return accumulated, unspentOuts
 }
 
-//func (chain *BlockChain) AddBlock(transactions []*Transaction) {
-//    var lastHash []byte
+func (chain *BlockChain) AddBlock(transactions []*Transaction) {
+    var lastHash []byte
 
-//    err := chain.Database.View(func(txn *badger.Txn) error {
-//        item, err := txn.Get([]byte("lh"))
-//        Handle(err)
-//        err = item.Value(func(val []byte) error{
-//            lastHash = val
-//            return nil
+    err := chain.Database.View(func(txn *badger.Txn) error {
+        item, err := txn.Get([]byte("lh"))
+        Handle(err)
+        err = item.Value(func(val []byte) error{
+            lastHash = val
+            return nil
 
-//        })
-//        Handle(err)
-//        return err
-//    })
-//    Handle(err)
+        })
+        Handle(err)
+        return err
+    })
+    Handle(err)
 
-//    newBlock := CreateBlock(transactions, lastHash)
+    newBlock := CreateBlock(transactions, lastHash)
 
-//    err = chain.Database.Update(func(transaction *badger.Txn) error {
-//        err := transaction.Set(newBlock.Hash, newBlock.Serialize())
-//        Handle(err)
-//        err = transaction.Set([]byte("lh"), newBlock.Hash)
+    err = chain.Database.Update(func(transaction *badger.Txn) error {
+        err := transaction.Set(newBlock.Hash, newBlock.Serialize())
+        Handle(err)
+        err = transaction.Set([]byte("lh"), newBlock.Hash)
 
-//        chain.lastHash = newBlock.Hash
-//        return err
-//    })
-//    Handle(err)
-//}
+        chain.lastHash = newBlock.Hash
+        return err
+    })
+    Handle(err)
+}
 
 func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction {
     var inputs []TxInput
@@ -230,7 +211,7 @@ func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction
         }
     }
 
-    outputs = append(ountputs, TxOutput{amount, to})
+    outputs = append(outputs, TxOutput{amount, to})
 
     if acc > amount {
         outputs = append(outputs, TxOutput{acc - amount, from})
